@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <title>Result</title>
+    </head>
+    <body>
+        <div>
+            <!-- 'result.html' file -->
+
+            {% extends 'index.html' %}
+
+            {% block content %}
+                <script>
+                    // Update the results section with Flask data
+                    document.getElementById('optimal-product-name').innerText = "{{ optimal_row['ProductName'] }}";
+                    document.getElementById('optimal-price').innerText = "{{ optimal_row['RetailSPrice'] }}";
+                    document.getElementById('optimal-quantity').innerText = "{{ optimal_row['TotalQty'] }}";
+                    document.getElementById('optimal-profit').innerText = "{{ optimal_row['Profit'] }}";
+
+                    document.getElementById('more-quantity-product-name').innerText = "{{ more_quantity_row['ProductName'] }}";
+                    document.getElementById('more-quantity-price').innerText = "{{ more_quantity_row['RetailSPrice'] }}";
+                    document.getElementById('more-quantity').innerText = "{{ more_quantity_row['TotalQty'] }}";
+                    document.getElementById('more-quantity-profit').innerText = "{{ more_quantity_row['Profit'] }}";
+
+                    // Update the scatter plot
+                    document.getElementById('scatter-plot').innerHTML = "{{ plot|safe }}";
+
+                    // Show the results section
+                 document.getElementById('results-section').style.display = 'block';
+                </script>
+            {% endblock %}
+
+        </div>
+    </body>
+</html>>

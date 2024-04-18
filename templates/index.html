@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Price Optimization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a; /* Dark background color */
+            color: #fff; /* Light text color */
+        }
+
+        .container {
+            width: 80%;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #333; /* Dark container background color */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            text-align: center; /* Center align content */
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #446688;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #bbb; /* Light label text color */
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #555; /* Dark border color */
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            background-color: #444; /* Dark input background color */
+            color: #fff; /* Light text color */
+        }
+
+        button {
+            background-color: #446688;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #557799;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>Retail Price Optimization</h1>
+      <!--  <label for="product">Select Product:</label>
+        <select id="product">
+            <option value="product1">Product 1</option>
+            <option value="product2">Product 2</option>
+            <option value="product3">Product 3</option>
+             Add more products as needed   
+        </select> -->
+        <form id="calculate-form" method="POST" action="{{ url_for('calculate') }}">
+            <label for="product">Select Product:</label>
+            <select id="product" name="product">
+                {% for product in products %}
+                    <option value="{{ product }}">{{ product }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="cost-price">Enter Cost Price:</label>
+            <input type="text" id="cost-price" name="cost-price">
+            <div align="left" id="cost-range"></div>
+
+            <label for="duration">Enter Duration (in days):</label>
+            <input type="text" id="duration" name="duration">
+
+            <button type="submit" id="calculate-button">Calculate</button>
+        </form>
+        <div id="results-section" style="display: none;">
+            <h2>Optimal:</h2>
+            <p>Product Name: <span id="optimal-product-name"></span></p>
+            <p>Optimal Price: <span id="optimal-price"></span></p>
+            <p>Quantity: <span id="optimal-quantity"></span></p>
+            <p>Profit: <span id="optimal-profit"></span></p>
+
+            <h2>For More Quantity:</h2>
+            <p>Product Name: <span id="more-quantity-product-name"></span></p>
+            <p>Optimal Price: <span id="more-quantity-price"></span></p>
+            <p>Quantity: <span id="more-quantity"></span></p>
+            <p>Profit: <span id="more-quantity-profit"></span></p>
+
+            <div id="scatter-plot"></div>
+           <!-- <div id="trend-plot"></div>  -->
+            <div id="plot_html" style="background-color: white;"></div>
+        </div>
+        </div>
+        <script>
+            $(document).ready(function() {
+                $('#product').change(function() {
+                    var selectedProduct = $(this).val();
+                    $.ajax({
+                        type: 'POST',
+                        url: '/get_cost_range',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({'product': selectedProduct}),
+                        success: function(data) {
+                            $('#cost-range').text('Previous value: ' + data.min_cost + ' - ' + data.max_cost);
+                        }
+                    });
+                });
+        
+                // Update this script to prevent form submission and handle it with AJAX
+                $('#calculate-button').click(function(event) {
+                    event.preventDefault(); // Prevent the default form submission behavior
+        
+                    var selectedProduct = $('#product').val();
+                    var costPrice = $('#cost-price').val();
+                    var duration = $('#duration').val();
+        
+                    $.ajax({
+                        type: 'POST',
+                        url: '/calculate',
+                        data: {'product': selectedProduct, 'cost-price': costPrice, 'duration': duration},
+                        success: function(data) {
+                            // Update the results section with the received data
+                            $('#optimal-product-name').text(data.optimal_product_name);
+                            $('#optimal-price').text(data.optimal_price);
+                            $('#optimal-quantity').text(data.optimal_quantity);
+                            $('#optimal-profit').text(data.optimal_profit);
+        
+                            $('#more-quantity-product-name').text(data.more_quantity_product_name);
+                            $('#more-quantity-price').text(data.more_quantity_price);
+                            $('#more-quantity').text(data.more_quantity);
+                            $('#more-quantity-profit').text(data.more_quantity_profit);
+        
+                            // Update the scatter plot
+                            $('#scatter-plot').html(data.scatter_plot);
+                           // $('#trend-plot').html(data.trend_plot);
+                           // $('#plot_html').html(data.plot_html);
+                            // Show the results section
+                            $('#results-section').show();
+                        }
+                    });
+                });
+            });
+        </script>
+        
+        <!--
+    <script>
+        // Add this script for dynamic CostPrice range display
+        $(document).ready(function() {
+            $('#product').change(function() {
+                var selectedProduct = $(this).val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_cost_range',
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify({'product': selectedProduct}),
+                    success: function(data) {
+                        $('#cost-range').text('Previous value: ' + data.min_cost + ' - ' + data.max_cost);
+                    }
+                });
+            });
+    
+        // Add this script for displaying results dynamically
+        $('#calculate-button').click(function() {
+            var selectedProduct = $('#product').val();
+            var costPrice = $('#cost-price').val();
+            var duration = $('#duration').val();
+
+            $.ajax({
+                type: 'POST',
+                url: '/calculate',
+                data: {'product': selectedProduct, 'cost-price': costPrice, 'duration': duration},
+                    success: function(data) {
+                    // Update the results section with the received data
+                    $('#optimal-product-name').text(data.optimal_product_name);
+                    $('#optimal-price').text(data.optimal_price);
+                    $('#optimal-quantity').text(data.optimal_quantity);
+                    $('#optimal-profit').text(data.optimal_profit);
+
+                    $('#more-quantity-product-name').text(data.more_quantity_product_name);
+                    $('#more-quantity-price').text(data.more_quantity_price);
+                    $('#more-quantity').text(data.more_quantity);
+                    $('#more-quantity-profit').text(data.more_quantity_profit);
+
+                    // Update the scatter plot
+                    $('#scatter-plot').html(data.scatter_plot);
+
+                    // Show the results section
+                    $('#results-section').show();
+                    }
+                });
+            });
+        });
+    </script> -->
+    <!--
+    <script>
+        // Add this script for dynamic CostPrice range display
+        $(document).ready(function() {
+            $('#calculate-form').submit(function(event) {
+                event.preventDefault();  // Prevent the default form submission
+    
+                var selectedProduct = $('#product').val();
+                var costPrice = $('#cost-price').val();
+                var duration = $('#duration').val();
+    
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ url_for("calculate") }}',
+                    data: {
+                        'product': selectedProduct,
+                        'cost-price': costPrice,
+                        'duration': duration
+                    },
+                    success: function(data) {
+                        // Handle the success response, e.g., update the DOM with the results
+                        console.log(data);
+                    },
+                    error: function(error) {
+                        // Handle the error response, if needed
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>  -->
+    
+</body>
+</html>
